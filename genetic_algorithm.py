@@ -15,7 +15,7 @@ class GeneticAlgorithm():
         self.original = original                
         self.population = []
         self.Elite = Elite
-        self.ChildList = [0 for i in range(2*self.population_size)]
+        self.child_population = [0 for i in range(2*self.population_size)]
         self.weights = []
         
     def run(self):
@@ -23,9 +23,9 @@ class GeneticAlgorithm():
         self.evaluate_fitness_for_each_chromosome_in(self.population)
         for i in range(self.max_generation):
             self.evaluate_selection_weights()
-            self.CrossOver()
-            self.Mutation()
-            self.NextGen()
+            self.generate_child_population()
+            self.mutate_child_population()
+            self.produce_next_generation()
             if self.population[0].genes == self.original:
                 print(self.population[0].genes)
                 break
@@ -50,29 +50,29 @@ class GeneticAlgorithm():
         for chromosome in self.population:
             self.weights.append(chromosome.calculate_fitness_function()/total_population_fitness)
 
-    def CrossOver(self):
+    def generate_child_population(self):
         for i in range(self.population_size):
-            parent1, parent2 = self.Selection()
+            parent1, parent2 = self.select_parent()
             child1, child2 = parent1.cross_with(parent2)
-            self.ChildList[i] = child1
-            self.ChildList[i + self.population_size] = child2
+            self.child_population[i] = child1
+            self.child_population[i + self.population_size] = child2
             
-    def Selection(self):
+    def select_parent(self):
         parent1, parent2 = random.choices(self.population, weights = self.weights, k=2)
         return (parent1, parent2)
             
-    def Mutation(self):
-        for i in range(len(self.ChildList)):
-            self.ChildList[i].mutate()
+    def mutate_child_population(self):
+        for chromosome in self.child_population:
+            chromosome.mutate()
     
-    def NextGen(self):
+    def produce_next_generation(self):
         sorted(self.population, key = lambda x: x.calculate_fitness_function(), reverse = True)
-        sorted(self.ChildList, key = lambda x: x.calculate_fitness_function(), reverse = True)
+        sorted(self.child_population, key = lambda x: x.calculate_fitness_function(), reverse = True)
         j=0
         for i in range(self.Elite):
-            if self.population[i].calculate_fitness_function() <= self.ChildList[j].calculate_fitness_function():
-                self.population[i] = self.ChildList[j]
+            if self.population[i].calculate_fitness_function() <= self.child_population[j].calculate_fitness_function():
+                self.population[i] = self.child_population[j]
                 j+=1
         for i in range(self.Elite, self.population_size):
-            self.population[i] = self.ChildList[j]
+            self.population[i] = self.child_population[j]
             j+=1
